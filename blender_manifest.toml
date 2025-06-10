@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "dynamic_render_border"
-version = "1.0.0"
+version = "1.0.1"
 name = "Dynamic Render Border"
 tagline = "Addon to create dynamic render borders for animations"
 maintainer = "Tobias Kummer | Overmind Studios"

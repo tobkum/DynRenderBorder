@@ -173,59 +173,14 @@ def dynamic_border_handler(scene, depsgraph=None):
             update_render_border(scene)
 
 
-# --- Load Post Handler ---
-def on_load_post_initialize_handlers(dummy):
-    """
-    Handler called after a .blend file is loaded or Blender starts.
-    Checks if the addon was enabled in any scene and adds the
-    frame_change_post handler if necessary.
-    """
-    for scene in bpy.data.scenes:
-        if hasattr(scene, "dynamic_render_border_props"):
-            props = scene.dynamic_render_border_props
-            if props.enable:
-                add_drb_handler_if_not_present()
-                break  # Handler added, no need to check other scenes
-
-
-# --- Timer for Initial Scan ---
-_initial_setup_timer_func = None  # Stores the function reference for the timer
-
-
-def run_initial_scene_scan():
-    """
-    Scans scenes once after addon registration to initialize handlers
-    if the addon was already enabled in any scene.
-    This is called by a timer to ensure bpy.data is fully accessible.
-    """
-    global _initial_setup_timer_func
-    if bpy.data.scenes:  # Should always be true by the time timer fires
-        on_load_post_initialize_handlers(None)  # Use the existing logic
-
-    _initial_setup_timer_func = None  # Clear after execution or if it fails to register
-    return None  # Ensures the timer runs only once
-
-
 # --- Property Callbacks ---
-def add_drb_handler_if_not_present():
-    if dynamic_border_handler not in bpy.app.handlers.frame_change_post:
-        bpy.app.handlers.frame_change_post.append(dynamic_border_handler)
-
-
-def remove_drb_handler_if_present():
-    if dynamic_border_handler in bpy.app.handlers.frame_change_post:
-        try:
-            bpy.app.handlers.frame_change_post.remove(dynamic_border_handler)
-        except ValueError:
-            pass
-
-
 def drb_enable_update(self, context):
     if self.enable:
-        add_drb_handler_if_not_present()
+        # The handler is always registered, it checks the enable prop itself.
         update_render_border(context.scene)
     else:
-        remove_drb_handler_if_present()
+        # The handler is always registered, it checks the enable prop itself.
+        # We just need to disable the border when the user unticks 'enable'.
         if context and context.scene:
             render = context.scene.render
             render.use_border = False
@@ -594,39 +549,25 @@ classes = (
 
 
 def register():
-    global _initial_setup_timer_func
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.dynamic_render_border_props = PointerProperty(
         type=DynamicRenderBorderProperties
     )
 
-    # Add a handler that runs after files are loaded to initialize based on scene properties
-    if on_load_post_initialize_handlers not in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.append(on_load_post_initialize_handlers)
-
-    # Schedule the initial scan to run shortly after registration.
-    # This defers access to bpy.data.scenes until Blender is more stable.
-    _initial_setup_timer_func = run_initial_scene_scan
-    if not bpy.app.timers.is_registered(_initial_setup_timer_func):
-        bpy.app.timers.register(
-            _initial_setup_timer_func, first_interval=0.1
-        )  # Small delay
+    # Register the handler directly. It will check the 'enable' prop internally.
+    if dynamic_border_handler not in bpy.app.handlers.frame_change_post:
+        bpy.app.handlers.frame_change_post.append(dynamic_border_handler)
 
 
 def unregister():
-    global _initial_setup_timer_func
-    remove_drb_handler_if_present()
-
-    if on_load_post_initialize_handlers in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.remove(on_load_post_initialize_handlers)
-
-    # Unregister the timer if it was set and is still registered
-    if _initial_setup_timer_func and bpy.app.timers.is_registered(
-        _initial_setup_timer_func
-    ):
-        bpy.app.timers.unregister(_initial_setup_timer_func)
-    _initial_setup_timer_func = None  # Clear the reference
+    # Unregister the handler.
+    if dynamic_border_handler in bpy.app.handlers.frame_change_post:
+        try:
+            bpy.app.handlers.frame_change_post.remove(dynamic_border_handler)
+        except ValueError:
+            # Handler was not in the list, which is fine.
+            pass
 
     if hasattr(bpy.types.Scene, "dynamic_render_border_props"):
         del bpy.types.Scene.dynamic_render_border_props
