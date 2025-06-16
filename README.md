@@ -19,11 +19,7 @@ Dynamic Render Border is a Blender addon that automatically adjusts the render b
 ## How to Use
 
 1.  **Installation:**
-    *   **AWAITING REVIEW ON THE EXTENSIONS PLATFORM, IN THE MEAN TIME:**
-    *   Download the addon (usually as a `.zip` file).
-    *   In Blender, go to `Edit > Preferences > Get Extensions`.
-    *   Click `Install from Disk` under the dropdown in the top right corner and navigate to the downloaded `.zip` file.
-    *   Enable the addon by checking the box next to its name ("Dynamic Render Border").
+    * Install via the Blender Extension platform - https://extensions.blender.org/add-ons/dynamic-render-border/
 
 2.  **Accessing the Panel:**
     *   The addon's panel can be found in the 3D Viewport.
